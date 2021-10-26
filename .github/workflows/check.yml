@@ -1,0 +1,79 @@
+name: Check
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - ".github/workflows/check.yml"
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - ".github/workflows/check.yml"
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  nonicons-font:
+    name: Check nonicons-font
+    runs-on: ubuntu-latest
+    env:
+      FOLDER: packages/nonicons-font
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Update checksum
+        uses: datakrama/archlinux-package-action@v1
+        with:
+          path: "${{ env.FOLDER }}"
+          namcap: false
+          updpkgsums: true
+          flags: ""
+
+      - name: Simple Diff
+        id: diff
+        uses: mudlabs/simple-diff@v1.2.0
+        with:
+          path: ${{ env.FOLDER }}/PKGBUILD
+
+      - name: Get version
+        id: get-version
+        if: steps.diff.outputs.modified == true
+        run: |
+          cd ${{ env.FOLDER }}
+          git clone https://github.com/yamatsum/nonicons.git && cd nonicons
+          echo "::set-output name=version::$(printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)")"
+
+      - name: Update PKGBUILD
+        uses: datakrama/archlinux-package-action@v1
+        with:
+          path: "${{ env.FOLDER }}"
+          pkgver: ${{ steps.get-version.outputs.version }}
+          pkgrel: 1
+          srcinfo: true
+          flags: ""
+
+      - name: Commit files
+        if: github.event_name != 'pull_request'
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ${{ env.FOLDER }}/PKGBUILD ${{ env.FOLDER }}/.SRCINFO
+          git commit -m "feat: bump to ${{ steps.get-version.outputs.version }}"
+
+      - name: Push changes
+        if: github.event_name != 'pull_request'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger CI workflow
+        if: github.event_name != 'pull_request'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: CI
+          token: ${{ secrets.PERSONAL_TOKEN }}
+          inputs: '{ "version": "${{ steps.get-version.outputs.version }}"" }'
