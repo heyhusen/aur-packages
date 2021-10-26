@@ -34,21 +34,21 @@ jobs:
           flags: ""
 
       - name: Simple Diff
-        id: git-diff
-        uses: technote-space/get-diff-action@v4.0.1
+        id: diff
+        uses: mudlabs/simple-diff@v1.2.0
         with:
-          FILES: |
-            ${{ env.FOLDER }}/PKGBUILD
+          path: ${{ env.FOLDER }}/PKGBUILD
 
       - name: Get version
         id: get-version
-        if: steps.git-diff.outputs.diff
+        if: steps.diff.outputs.modified == true
         run: |
           cd ${{ env.FOLDER }}
           git clone https://github.com/yamatsum/nonicons.git && cd nonicons
           echo "::set-output name=version::$(printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)")"
 
       - name: Update PKGBUILD
+        if: steps.diff.outputs.modified == true
         uses: datakrama/archlinux-package-action@v1
         with:
           path: "${{ env.FOLDER }}"
@@ -58,7 +58,7 @@ jobs:
           flags: ""
 
       - name: Commit files
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && steps.diff.outputs.modified == true
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -66,13 +66,13 @@ jobs:
           git commit -m "feat: bump to ${{ steps.get-version.outputs.version }}"
 
       - name: Push changes
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && steps.diff.outputs.modified == true
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Trigger CI workflow
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && steps.diff.outputs.modified == true
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: CI

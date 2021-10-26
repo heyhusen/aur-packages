@@ -69,7 +69,7 @@ jobs:
           mv ${{ env.FOLDER }}/PKGBUILD ./
           mv ${{ env.FOLDER }}/.SRCINFO ./
 
-          git add ${{ env.FOLDER }}/PKGBUILD ${{ env.FOLDER }}/.SRCINFO
+          git add PKGBUILD .SRCINFO
           git commit -m "$COMMIT_MESSAGE"
 
       - name: Push changes to GitHub
