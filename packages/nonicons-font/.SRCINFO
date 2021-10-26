@@ -6,6 +6,6 @@ pkgbase = nonicons-font
 	arch = any
 	license = unknown
 	source = nonicons-r47.0135a2f.ttf::https://github.com/yamatsum/nonicons/raw/master/dist/nonicons.ttf
-	sha512sums = 58d933ea14775fcc5ee8e142e287cc2054a33d05e719e10a7edf00f01388948e302dfd055d955f63d4a871af376858f403b666cac540c7cb4874907582b8763c
+	sha512sums = 9684ab3db414f734bb422ac6daa5a2a9d23019ca9230a441652e17ce79136032282b5069afd123161021d3424523216d4b530b5e973abd427230a9c02a8e2b40
 
 pkgname = nonicons-font
