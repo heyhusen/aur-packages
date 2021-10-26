@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "packages/nonicons-font/.SRCINFO"
+      - "packages/nonicons-font/PKGBUILD"
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "packages/nonicons-font/.SRCINFO"
+      - "packages/nonicons-font/PKGBUILD"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Upstream synced version"
+        default: ""
+        required: false
+
+env:
+  FOLDER: packages/nonicons-font
+  PACKAGE: nonicons-font
+
+jobs:
+  build:
+    name: Build package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Build & validate package
+        uses: datakrama/archlinux-package-action@v1
+        with:
+          path: "${{ env.FOLDER }}"
+
+  release:
+    name: Release package
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: main
+
+      - name: Commit changes
+        run: |
+          if [[ -z "${{ github.event.inputs.version }}" ]]; then
+            COMMIT_MESSAGE="Update AUR package"
+          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+            COMMIT_MESSAGE="feat: bump to ${{ github.event.inputs.version }}"
+          fi
+          git config --local user.name "${{ secrets.GIT_USERNAME }}"
+          git config --local user.email ${{ secrets.GIT_EMAIL }}
+          git checkout ${{ env.PACKAGE }}/aur
+          git checkout main ${{ env.FOLDER }}/PKGBUILD ${{ env.FOLDER }}/.SRCINFO
+          git add ${{ env.FOLDER }}/PKGBUILD ${{ env.FOLDER }}/.SRCINFO
+          git commit -m "$COMMIT_MESSAGE"
+
+      - name: Push changes to GitHub
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ env.PACKAGE }}/aur
+
+      - name: Push changes to AUR
+        uses: datakrama/push-aur-action@v1
+        with:
+          pkgname: "${{ env.PACKAGE }}"
+          git_username: ${{ secrets.GIT_USERNAME }}
+          git_email: ${{ secrets.GIT_EMAIL }}
+          private_ssh_key: ${{ secrets.AUR_PRIVATE_SSH_KEY }}
