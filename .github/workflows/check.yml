@@ -34,14 +34,15 @@ jobs:
           flags: ""
 
       - name: Simple Diff
-        id: diff
-        uses: mudlabs/simple-diff@v1.2.0
+        id: git-diff
+        uses: technote-space/get-diff-action@v4.0.1
         with:
-          path: ${{ env.FOLDER }}/PKGBUILD
+          FILES: |
+            ${{ env.FOLDER }}/PKGBUILD
 
       - name: Get version
         id: get-version
-        if: steps.diff.outputs.modified == true
+        if: steps.git-diff.outputs.diff
         run: |
           cd ${{ env.FOLDER }}
           git clone https://github.com/yamatsum/nonicons.git && cd nonicons
