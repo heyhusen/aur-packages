@@ -1,4 +1,4 @@
-name: nonicons-font
+name: CI - nonicons-font
 
 on:
   push:
@@ -65,6 +65,7 @@ jobs:
 
           git checkout ${{ env.PACKAGE }}/aur
           git checkout main ${{ env.FOLDER }}/PKGBUILD ${{ env.FOLDER }}/.SRCINFO
+          git restore --staged .
 
           mv ${{ env.FOLDER }}/PKGBUILD ./
           mv ${{ env.FOLDER }}/.SRCINFO ./

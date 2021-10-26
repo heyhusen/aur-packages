@@ -15,11 +15,13 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
-  nonicons-font:
+  nonicons-font-check:
     name: Check nonicons-font
     runs-on: ubuntu-latest
     env:
       FOLDER: packages/nonicons-font
+    outputs:
+      diff: ${{ steps.diff.outputs.changed }}
 
     steps:
       - name: Checkout
@@ -35,22 +37,35 @@ jobs:
           updpkgsums: true
           flags: ""
 
-      - name: Simple Diff
+      - name: Git diff
         id: diff
-        uses: mudlabs/simple-diff@v1.2.0
-        with:
-          path: ${{ env.FOLDER }}/PKGBUILD
+        run: |
+          if git diff --quiet ${{ env.FOLDER }}/PKGBUILD; then
+            echo "::set-output name=changed::false"
+          else
+            echo "::set-output name=changed::true"
+          fi
+
+  nonicons-font-build:
+    name: Build nonicons-font
+    runs-on: ubuntu-latest
+    needs: nonicons-font-check
+    if: needs.nonicons-font-check.outputs.diff == 'true'
+    env:
+      FOLDER: packages/nonicons-font
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Get version
         id: get-version
-        if: steps.diff.outputs.modified == true
         run: |
           cd ${{ env.FOLDER }}
           git clone https://github.com/yamatsum/nonicons.git && cd nonicons
           echo "::set-output name=version::$(printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)")"
 
       - name: Update PKGBUILD
-        if: steps.diff.outputs.modified == true
         uses: datakrama/archlinux-package-action@v1
         with:
           path: "${{ env.FOLDER }}"
@@ -60,7 +75,7 @@ jobs:
           flags: ""
 
       - name: Commit files
-        if: github.event_name != 'pull_request' && steps.diff.outputs.modified == true
+        if: github.event_name != 'pull_request'
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -68,13 +83,13 @@ jobs:
           git commit -m "feat: bump to ${{ steps.get-version.outputs.version }}"
 
       - name: Push changes
-        if: github.event_name != 'pull_request' && steps.diff.outputs.modified == true
+        if: github.event_name != 'pull_request'
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Trigger CI workflow
-        if: github.event_name != 'pull_request' && steps.diff.outputs.modified == true
+        if: github.event_name != 'pull_request'
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: CI
