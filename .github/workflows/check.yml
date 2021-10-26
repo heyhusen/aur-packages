@@ -77,4 +77,4 @@ jobs:
         with:
           workflow: CI
           token: ${{ secrets.PERSONAL_TOKEN }}
-          inputs: '{ "version": "${{ steps.get-version.outputs.version }}"" }'
+          inputs: '{ "version": "${{ steps.get-version.outputs.version }}" }'
