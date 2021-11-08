@@ -92,7 +92,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: benc-uk/workflow-dispatch@v1
         with:
-          workflow: CI
+          workflow: CI - nonicons-font
           token: ${{ secrets.PERSONAL_TOKEN }}
           inputs: '{ "version": "${{ steps.get-version.outputs.version }}" }'
 
@@ -168,6 +168,6 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: benc-uk/workflow-dispatch@v1
         with:
-          workflow: CI
+          workflow: CI - docker-slim-bin
           token: ${{ secrets.PERSONAL_TOKEN }}
           inputs: '{ "version": "${{ needs.docker-slim-bin-check.outputs.version }}" }'
