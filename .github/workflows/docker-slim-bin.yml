@@ -37,6 +37,7 @@ jobs:
         uses: datakrama/archlinux-package-action@v1
         with:
           path: "${{ env.FOLDER }}"
+          namcap: false
 
   release:
     name: Release package
