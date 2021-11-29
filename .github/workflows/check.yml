@@ -247,3 +247,155 @@ jobs:
           workflow: CI - code-minimap-bin
           token: ${{ secrets.PERSONAL_TOKEN }}
           inputs: '{ "version": "${{ needs.code-minimap-bin-check.outputs.version }}" }'
+
+  ncspot-bin-check:
+    name: Check ncspot-bin
+    runs-on: ubuntu-latest
+    env:
+      FOLDER: packages/ncspot-bin
+    outputs:
+      found: ${{ steps.search-version.outputs.found }}
+      version: ${{ steps.get-version.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Get upstream version
+        id: get-version
+        run: echo "::set-output name=version::$(curl -s GET https://api.github.com/repos/hrkfdn/ncspot/tags | jq -r '.[].name' | head -n1 | cut -c 2-)"
+
+      - name: Find version on PKGBUILD
+        id: search-version
+        run: |
+          cd ${{ env.FOLDER }}
+          if grep -Fq "${{ steps.get-version.outputs.version }}" PKGBUILD
+          then
+            echo "::set-output name=found::true"
+          else
+            echo "::set-output name=found::false"
+          fi
+
+  ncspot-bin-build:
+    name: Build ncspot
+    runs-on: ubuntu-latest
+    needs: ncspot-bin-check
+    if: needs.ncspot-bin-check.outputs.found == 'false'
+    container: archlinux:base-devel
+    outputs:
+      version: ${{ needs.ncspot-bin-check.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: "hrkfdn/ncspot"
+          ref: "v${{ needs.ncspot-bin-check.outputs.version }}"
+
+      - name: Install dependecies
+        run: |
+          pacman -Syu --needed --noconfirm rustup cargo git alsa-lib python pkgconf openssl libpulse libxcb ncurses dbus
+
+      - name: Set up rustup
+        run: |
+          rustup set profile minimal
+          rustup default stable
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run build
+        run: |
+          cargo fetch --locked
+          cargo build --release --locked
+          cargo test --release --locked
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ncspot-v${{ needs.ncspot-bin-check.outputs.version }}
+          path: target/release/ncspot
+
+  ncspot-bin-release:
+    name: Release ncspot
+    runs-on: ubuntu-latest
+    needs: ncspot-bin-build
+    env:
+      FOLDER: packages/ncspot-bin
+    outputs:
+      version: ${{ needs.ncspot-bin-build.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: ncspot-v${{ needs.ncspot-bin-build.outputs.version }}
+          path: ${{ env.FOLDER }}
+
+      - name: Packaging assets
+        run: |
+          cd ${{ env.FOLDER }}
+          tar czvf ncspot-v${{ needs.ncspot-bin-build.outputs.version }}-linux-x86_64.tar.gz ncspot
+          shasum -a 512 ncspot-v${{ needs.ncspot-bin-build.outputs.version }}-linux-x86_64.tar.gz > ncspot-v${{ needs.ncspot-bin-build.outputs.version }}-linux-x86_64.sha512
+
+      - name: Releasing assets
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ncspot@v${{ needs.ncspot-bin-build.outputs.version }}
+          tag_name: ncspot@v${{ needs.ncspot-bin-build.outputs.version }}
+          files: ${{ env.FOLDER }}/ncspot-*
+
+  ncspot-bin-update:
+    name: Update ncspot-bin
+    needs: ncspot-bin-release
+    runs-on: ubuntu-latest
+    env:
+      FOLDER: packages/ncspot-bin
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Update PKGBUILD
+        uses: datakrama/archlinux-package-action@v1
+        with:
+          path: "${{ env.FOLDER }}"
+          pkgver: ${{ needs.ncspot-bin-release.outputs.version }}
+          pkgrel: 1
+          namcap: false
+          updpkgsums: true
+          srcinfo: true
+          flags: ""
+
+      - name: Commit changes
+        if: github.event_name != 'pull_request'
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ${{ env.FOLDER }}/PKGBUILD ${{ env.FOLDER }}/.SRCINFO
+          git commit -m "chore(ncspot-bin): bump to v${{ needs.ncspot-bin-release.outputs.version }}"
+
+      - name: Push changes
+        if: github.event_name != 'pull_request'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger CI workflow
+        if: github.event_name != 'pull_request'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: CI - ncspot-bin
+          token: ${{ secrets.PERSONAL_TOKEN }}
+          inputs: '{ "version": "${{ needs.ncspot-bin-release.outputs.version }}" }'
