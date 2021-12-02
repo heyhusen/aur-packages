@@ -1,18 +1,18 @@
-name: CI - ncspot-bin
+name: CI - plenti-bin
 
 on:
   push:
     branches:
       - "main"
     paths:
-      - "packages/ncspot-bin/.SRCINFO"
-      - "packages/ncspot-bin/PKGBUILD"
+      - "packages/plenti-bin/.SRCINFO"
+      - "packages/plenti-bin/PKGBUILD"
   pull_request:
     branches:
       - "main"
     paths:
-      - "packages/ncspot-bin/.SRCINFO"
-      - "packages/ncspot-bin/PKGBUILD"
+      - "packages/plenti-bin/.SRCINFO"
+      - "packages/plenti-bin/PKGBUILD"
   workflow_dispatch:
     inputs:
       version:
@@ -21,8 +21,8 @@ on:
         required: false
 
 env:
-  FOLDER: packages/ncspot-bin
-  PACKAGE: ncspot-bin
+  FOLDER: packages/plenti-bin
+  PACKAGE: plenti-bin
 
 jobs:
   build:
@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.0
 
       - name: Build & validate package
         uses: datakrama/archlinux-package-action@v1
@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.0
         with:
           persist-credentials: false
           fetch-depth: 0

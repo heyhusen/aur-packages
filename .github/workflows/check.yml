@@ -399,3 +399,79 @@ jobs:
           workflow: CI - ncspot-bin
           token: ${{ secrets.PERSONAL_TOKEN }}
           inputs: '{ "version": "${{ needs.ncspot-bin-release.outputs.version }}" }'
+
+  plenti-bin-check:
+    name: Check plenti-bin
+    runs-on: ubuntu-latest
+    env:
+      FOLDER: packages/plenti-bin
+    outputs:
+      found: ${{ steps.search-version.outputs.found }}
+      version: ${{ steps.get-version.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+
+      - name: Get upstream version
+        id: get-version
+        run: echo "::set-output name=version::$(curl --silent "https://api.github.com/repos/plentico/plenti/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | cut -c 2-)"
+
+      - name: Find version on PKGBUILD
+        id: search-version
+        run: |
+          cd ${{ env.FOLDER }}
+          if grep -q "${{ steps.get-version.outputs.version }}" PKGBUILD
+          then
+            echo "::set-output name=found::true"
+          else
+            echo "::set-output name=found::false"
+          fi
+
+  plenti-bin-update:
+    name: Update plenti-bin
+    needs: plenti-bin-check
+    if: needs.plenti-bin-check.outputs.found == 'false'
+    runs-on: ubuntu-latest
+    env:
+      FOLDER: packages/plenti-bin
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Update PKGBUILD
+        uses: datakrama/archlinux-package-action@v1
+        with:
+          path: "${{ env.FOLDER }}"
+          pkgver: ${{ needs.plenti-bin-check.outputs.version }}
+          pkgrel: 1
+          namcap: false
+          updpkgsums: true
+          srcinfo: true
+          flags: ""
+
+      - name: Commit changes
+        if: github.event_name != 'pull_request'
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ${{ env.FOLDER }}/PKGBUILD ${{ env.FOLDER }}/.SRCINFO
+          git commit -m "chore(plenti-bin): bump to v${{ needs.plenti-bin-check.outputs.version }}"
+
+      - name: Push changes
+        if: github.event_name != 'pull_request'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger CI workflow
+        if: github.event_name != 'pull_request'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: CI - plenti-bin
+          token: ${{ secrets.PERSONAL_TOKEN }}
+          inputs: '{ "version": "${{ needs.plenti-bin-check.outputs.version }}" }'

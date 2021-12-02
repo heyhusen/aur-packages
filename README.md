@@ -50,6 +50,12 @@ A set of SVG icons representing programming languages, designing & development t
 
 A Gtk3.20+ theme created using the awesome Nord color palette.
 
+### plenti-bin
+
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/hapakaien/aur-packages/CI%20-%20plenti-bin?label=CI&style=flat-square)](https://github.com/hapakaien/aur-packages/actions/workflows/plenti-bin.yml) [![GitHub release (latest by date)](https://img.shields.io/github/v/release/plentico/plenti?style=flat-square)](https://github.com/plentico/plenti) [![AUR version](https://img.shields.io/aur/version/plenti-bin?style=flat-square)](https://aur.archlinux.org/packages/plenti-bin/)
+
+Static Site Generator with Go backend and Svelte frontend.
+
 ## Thanks
 
 Big thanks to GitHub Actions, which has made it easy for me to maintain all these packages with automation.
