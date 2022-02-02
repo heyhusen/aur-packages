@@ -5,14 +5,14 @@ on:
     branches:
       - "main"
     paths:
-      - "packages/plenti-bin/.SRCINFO"
-      - "packages/plenti-bin/PKGBUILD"
+      - "plenti-bin/.SRCINFO"
+      - "plenti-bin/PKGBUILD"
   pull_request:
     branches:
       - "main"
     paths:
-      - "packages/plenti-bin/.SRCINFO"
-      - "packages/plenti-bin/PKGBUILD"
+      - "plenti-bin/.SRCINFO"
+      - "plenti-bin/PKGBUILD"
   workflow_dispatch:
     inputs:
       version:
@@ -21,7 +21,6 @@ on:
         required: false
 
 env:
-  FOLDER: packages/plenti-bin
   PACKAGE: plenti-bin
 
 jobs:
@@ -34,9 +33,9 @@ jobs:
         uses: actions/checkout@v2.4.0
 
       - name: Build & validate package
-        uses: datakrama/archlinux-package-action@v1
+        uses: hapakaien/archlinux-package-action@v2
         with:
-          path: "${{ env.FOLDER }}"
+          path: "${{ env.PACKAGE }}"
           namcap: false
 
   release:
@@ -48,42 +47,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2.4.0
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-          ref: main
 
-      - name: Commit changes
+      - name: Set commit message
+        id: commit
         run: |
           if [[ -z "${{ github.event.inputs.version }}" ]]; then
             COMMIT_MESSAGE="chore: update AUR package"
           elif [[ -n "${{ github.event.inputs.version }}" ]]; then
-            COMMIT_MESSAGE="chore: bump to v${{ github.event.inputs.version }}"
+            COMMIT_MESSAGE="chore: bump to ${{ github.event.inputs.version }}"
           fi
 
-          git config --local user.name "${{ secrets.GIT_USERNAME }}"
-          git config --local user.email ${{ secrets.GIT_EMAIL }}
+          echo "::set-output name=message::$COMMIT_MESSAGE"
 
-          git checkout ${{ env.PACKAGE }}/aur
-          git checkout main ${{ env.FOLDER }}/PKGBUILD ${{ env.FOLDER }}/.SRCINFO
-          git restore --staged .
-
-          mv ${{ env.FOLDER }}/PKGBUILD ./
-          mv ${{ env.FOLDER }}/.SRCINFO ./
-
-          git add PKGBUILD .SRCINFO
-          git commit -m "$COMMIT_MESSAGE"
-
-      - name: Push changes to GitHub
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ env.PACKAGE }}/aur
-
-      - name: Push changes to AUR
-        uses: datakrama/push-aur-action@v1
+      - name: Publish AUR package
+        uses: KSXGitHub/github-actions-deploy-aur@v2.2.5
         with:
           pkgname: ${{ env.PACKAGE }}
-          git_username: ${{ secrets.GIT_USERNAME }}
-          git_email: ${{ secrets.GIT_EMAIL }}
-          private_ssh_key: ${{ secrets.AUR_PRIVATE_SSH_KEY }}
+          pkgbuild: ${{ env.PACKAGE }}/PKGBUILD
+          commit_username: ${{ secrets.GIT_USERNAME }}
+          commit_email: ${{ secrets.GIT_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_PRIVATE_SSH_KEY }}
+          commit_message: ${{ steps.commit.outputs.message }}
+          allow_empty_commits: false
+          force_push: true
