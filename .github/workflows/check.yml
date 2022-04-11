@@ -318,7 +318,7 @@ jobs:
           cargo build --release --locked
           cargo test --release --locked
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: ncspot-v${{ needs.check-ncspot-bin.outputs.version }}
           path: target/release/ncspot
