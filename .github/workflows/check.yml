@@ -315,7 +315,7 @@ jobs:
       - name: Run build
         run: |
           cargo fetch --locked
-          cargo build --release --locked
+          cargo build --release --locked --features cover
           cargo test --release --locked
 
       - uses: actions/upload-artifact@v3
