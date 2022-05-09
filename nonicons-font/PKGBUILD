@@ -1,6 +1,6 @@
 # Maintainer: A. Husen <hi@husen.id>
 pkgname=nonicons-font
-pkgver=r53.6a2faf4
+pkgver=r54.0d5828e
 pkgrel=1
 pkgdesc="A set of SVG icons representing programming languages, designing & development tools."
 arch=('any')
