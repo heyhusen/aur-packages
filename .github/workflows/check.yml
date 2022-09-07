@@ -64,6 +64,7 @@ jobs:
           cd ${{ env.FOLDER }}
           git clone https://github.com/yamatsum/nonicons.git && cd nonicons
           echo "::set-output name=version::$(printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)")"
+          cd ../ && rm -rf nonicons
 
       - name: Update PKGBUILD
         uses: hapakaien/archlinux-package-action@v2
