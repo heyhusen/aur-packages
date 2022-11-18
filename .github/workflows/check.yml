@@ -91,7 +91,7 @@ jobs:
 
       - name: Trigger CI workflow
         if: github.event_name != 'pull_request'
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v121
         with:
           workflow: CI - nonicons-font
           token: ${{ secrets.PERSONAL_TOKEN }}
@@ -167,7 +167,7 @@ jobs:
 
       - name: Trigger CI workflow
         if: github.event_name != 'pull_request'
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v121
         with:
           workflow: CI - docker-slim-bin
           token: ${{ secrets.PERSONAL_TOKEN }}
@@ -243,7 +243,7 @@ jobs:
 
       - name: Trigger CI workflow
         if: github.event_name != 'pull_request'
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v121
         with:
           workflow: CI - code-minimap-bin
           token: ${{ secrets.PERSONAL_TOKEN }}
@@ -396,7 +396,7 @@ jobs:
 
       - name: Trigger CI workflow
         if: github.event_name != 'pull_request'
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v121
         with:
           workflow: CI - ncspot-bin
           token: ${{ secrets.PERSONAL_TOKEN }}
@@ -472,7 +472,7 @@ jobs:
 
       - name: Trigger CI workflow
         if: github.event_name != 'pull_request'
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v121
         with:
           workflow: CI - plenti-bin
           token: ${{ secrets.PERSONAL_TOKEN }}
