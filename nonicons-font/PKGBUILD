@@ -7,7 +7,7 @@ arch=('any')
 url="https://github.com/yamatsum/nonicons"
 license=('unknown')
 source=("nonicons-${pkgver}.ttf::${url}/raw/master/dist/nonicons.ttf")
-sha512sums=('d9b777ec82fd724511c964d799abe82c43df21531f0c6cd8c20c6d7e5290da6a20d2a323a3bc692801be26bf32f43892426d18649273d0aec2fb986dcbd49572')
+sha512sums=('8f7293f8820cc0c97d56380339212bd3fe22946ea93da4e25bd169c47ef799f34363fb4e4091f68c84b35ea3daa712a18635c7c4231a4f8c6a70d63a826730fe')
 
 package() {
     install -Dm644 "${srcdir}/nonicons-"*.ttf "${pkgdir}/usr/share/fonts/TTF/nonicons.ttf"
