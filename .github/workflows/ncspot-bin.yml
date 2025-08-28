@@ -60,7 +60,7 @@ jobs:
           echo "::set-output name=message::$COMMIT_MESSAGE"
 
       - name: Publish AUR package
-        uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
+        uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
         with:
           pkgname: ${{ env.PACKAGE }}
           pkgbuild: ${{ env.PACKAGE }}/PKGBUILD
