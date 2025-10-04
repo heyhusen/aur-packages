@@ -349,7 +349,7 @@ jobs:
           shasum -a 512 ncspot-v${{ needs.build-ncspot-bin.outputs.version }}-linux-x86_64.tar.gz > ncspot-v${{ needs.build-ncspot-bin.outputs.version }}-linux-x86_64.sha512
 
       - name: Releasing assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: ncspot@v${{ needs.build-ncspot-bin.outputs.version }}
           tag_name: ncspot@v${{ needs.build-ncspot-bin.outputs.version }}
